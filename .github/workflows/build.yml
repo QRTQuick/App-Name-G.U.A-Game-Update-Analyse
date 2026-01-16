@@ -10,9 +10,6 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    env:
-      ANDROID_SDK_ROOT: ${{ runner.temp }}/android-sdk
-      ANDROID_HOME: ${{ runner.temp }}/android-sdk
 
     steps:
     - uses: actions/checkout@v4
@@ -41,14 +38,18 @@ jobs:
 
     - name: Download Android command line tools
       run: |
-        mkdir -p "$ANDROID_SDK_ROOT"
-        cd "$ANDROID_SDK_ROOT"
+        SDK_DIR="$RUNNER_TEMP/android-sdk"
+        mkdir -p "$SDK_DIR"
+        cd "$SDK_DIR"
         curl -fsSL https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -o cmdline-tools.zip
         unzip -q cmdline-tools.zip -d cmdline-tools-temp
         mkdir -p cmdline-tools/latest
         mv cmdline-tools-temp/cmdline-tools/* cmdline-tools/latest/
         rm -f cmdline-tools.zip
-        export PATH="$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$PATH"
+        echo "ANDROID_SDK_ROOT=$SDK_DIR" >> $GITHUB_ENV
+        echo "ANDROID_HOME=$SDK_DIR" >> $GITHUB_ENV
+        echo "$SDK_DIR/cmdline-tools/latest/bin" >> $GITHUB_PATH
+        echo "$SDK_DIR/platform-tools" >> $GITHUB_PATH
 
     - name: Install Android SDK components (platform-tools, build-tools, platforms, ndk)
       run: |
@@ -56,10 +57,7 @@ jobs:
         yes | sdkmanager --sdk_root="$ANDROID_SDK_ROOT" --licenses || true
         sdkmanager --sdk_root="$ANDROID_SDK_ROOT" "platform-tools" "platforms;android-33" "build-tools;33.0.2" "ndk;25.2.9519653" "cmake;3.22.1" || true
 
-    - name: Add SDK tools to PATH
-      run: |
-        echo "##[add-path] $ANDROID_SDK_ROOT/platform-tools"
-      shell: bash
+    # PATH entries were added to $GITHUB_PATH in the download step
 
     - name: Cache pip and Buildozer files
       uses: actions/cache@v4
