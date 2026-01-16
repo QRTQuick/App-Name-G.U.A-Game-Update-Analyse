@@ -10,57 +10,82 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      ANDROID_SDK_ROOT: ${{ runner.temp }}/android-sdk
+      ANDROID_HOME: ${{ runner.temp }}/android-sdk
 
     steps:
     - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        submodules: recursive
+        persist-credentials: true
+
+    - name: Configure Git for CI
+      run: |
+        git config --global user.email "ci@example.com"
+        git config --global user.name "GitHub Actions"
+        git config --global --add safe.directory "${{ github.workspace }}"
+        git config --global core.longpaths true
 
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
         python-version: '3.10'
 
-    - name: Install system dependencies
+    - name: Install system packages
       run: |
         sudo apt-get update
-        sudo apt-get install -y \
-          git \
-          zip \
-          unzip \
-          openjdk-17-jdk \
-          wget \
-          autoconf \
-          libtool \
-          pkg-config \
-          zlib1g-dev \
-          libncurses5-dev \
-          libncursesw5-dev \
-          cmake \
-          libffi-dev \
-          libssl-dev
+        sudo apt-get install -y --no-install-recommends \
+          git zip unzip wget curl openjdk-17-jdk build-essential autoconf libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev cmake libffi-dev libssl-dev python3-venv
 
-    - name: Install Python build tools
+    - name: Download Android command line tools
       run: |
-        pip install --upgrade pip==23.3.1
-        pip install buildozer==1.5.0
-        pip install cython==3.0.7
+        mkdir -p "$ANDROID_SDK_ROOT"
+        cd "$ANDROID_SDK_ROOT"
+        curl -fsSL https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -o cmdline-tools.zip
+        unzip -q cmdline-tools.zip -d cmdline-tools-temp
+        mkdir -p cmdline-tools/latest
+        mv cmdline-tools-temp/cmdline-tools/* cmdline-tools/latest/
+        rm -f cmdline-tools.zip
+        export PATH="$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$PATH"
 
-    - name: Install app dependencies
+    - name: Install Android SDK components (platform-tools, build-tools, platforms, ndk)
       run: |
-        pip install kivy==2.3.0
-        pip install kivymd==1.2.0
-        pip install requests==2.31.0
-        pip install pillow==10.2.0
-        pip install python-dotenv==1.0.0
+        export PATH="$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools:$PATH"
+        yes | sdkmanager --sdk_root="$ANDROID_SDK_ROOT" --licenses || true
+        sdkmanager --sdk_root="$ANDROID_SDK_ROOT" "platform-tools" "platforms;android-33" "build-tools;33.0.2" "ndk;25.2.9519653" "cmake;3.22.1" || true
+
+    - name: Add SDK tools to PATH
+      run: |
+        echo "##[add-path] $ANDROID_SDK_ROOT/platform-tools"
+      shell: bash
+
+    - name: Cache pip and Buildozer files
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cache/pip
+          .buildozer
+          ~/.buildozer
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+
+    - name: Install Python build tools and dependencies
+      run: |
+        python -m pip install --upgrade pip==23.3.1
+        python -m pip install --upgrade setuptools wheel
+        python -m pip install buildozer==1.5.0 cython
+        if [ -f requirements.txt ]; then python -m pip install -r requirements.txt; fi
 
     - name: Build with Buildozer
-      run: |
-        # Accept buildozer root warning
-        export BUILDOZER_WARN_ON_ROOT=0
-        # Build with verbose output
-        buildozer -v android debug
       env:
-        ANDROID_HOME: /usr/local/lib/android/sdk
-      timeout-minutes: 60
+        ANDROID_SDK_ROOT: ${{ env.ANDROID_SDK_ROOT }}
+        ANDROID_HOME: ${{ env.ANDROID_HOME }}
+        PATH: ${{ env.PATH }}:$RUNNER_TEMP/android-sdk/cmdline-tools/latest/bin
+      run: |
+        export BUILDOZER_WARN_ON_ROOT=0
+        buildozer -v android debug
+      timeout-minutes: 120
 
     - name: Show build logs on failure
       if: failure()
@@ -68,8 +93,8 @@ jobs:
         echo "=== Checking for log files ==="
         find .buildozer -name "*.log" -type f 2>/dev/null || echo "No log files found"
         echo ""
-        echo "=== Last 100 lines of any found logs ==="
-        find .buildozer -name "*.log" -type f -exec sh -c 'echo "=== {} ===" && tail -100 "{}"' \; 2>/dev/null || echo "Could not read logs"
+        echo "=== Last 200 lines of any found logs ==="
+        find .buildozer -name "*.log" -type f -exec sh -c 'echo "=== {} ===" && tail -200 "{}"' \; 2>/dev/null || echo "Could not read logs"
 
     - name: Upload APK
       if: success()
