@@ -21,6 +21,9 @@ from screens import (
     DisclaimerScreen
 )
 from utils.storage import storage
+import sys
+import traceback
+from datetime import datetime
 
 # Mobile window size
 Window.size = (360, 640)
@@ -95,5 +98,33 @@ class GUAApp(MDApp):
         self.sm.current = 'details'
 
 
+def _write_crash_log(exc_type, exc_value, tb):
+    try:
+        log_dir = storage.data_dir
+        log_dir.mkdir(parents=True, exist_ok=True)
+        log_file = log_dir / 'crash.log'
+        with open(log_file, 'a', encoding='utf-8') as f:
+            f.write(f"--- Crash at {datetime.utcnow().isoformat()} UTC ---\n")
+            traceback.print_exception(exc_type, exc_value, tb, file=f)
+            f.write('\n')
+    except Exception:
+        # Best-effort; avoid masking the original exception
+        pass
+
+
 if __name__ == '__main__':
-    GUAApp().run()
+    # Install global exception hook to capture unhandled exceptions
+    def _ex_hook(exc_type, exc_value, exc_tb):
+        _write_crash_log(exc_type, exc_value, exc_tb)
+        # Also print to stderr so CI/device logs include the traceback
+        traceback.print_exception(exc_type, exc_value, exc_tb)
+
+    sys.excepthook = _ex_hook
+
+    try:
+        GUAApp().run()
+    except Exception:
+        # Catch anything that escapes Kivy's internals and log it
+        exc_type, exc_value, exc_tb = sys.exc_info()
+        _write_crash_log(exc_type, exc_value, exc_tb)
+        raise
