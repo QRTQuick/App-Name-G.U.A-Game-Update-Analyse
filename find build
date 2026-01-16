@@ -1,0 +1,11 @@
+Go to your GitHub repository
+
+Click Actions
+
+Click the latest workflow run
+
+Scroll down to Artifacts
+
+Download GUA-debug-apk
+
+Inside is your .apk file

@@ -8,7 +8,8 @@ source.include_exts = py,png,jpg,kv,atlas
 
 version = 1.0.0
 
-requirements = python3,kivy,kivymd,requests,pillow,python-dotenv
+# Fixed Python version and pinned library versions
+requirements = python3==3.10,kivy==2.3.0,kivymd==1.2.0,requests==2.31.0,pillow==10.2.0,python-dotenv==1.0.0,pyjnius
 
 orientation = portrait
 fullscreen = 0

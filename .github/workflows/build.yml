@@ -11,35 +11,43 @@ jobs:
     timeout-minutes: 120
 
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - uses: actions/setup-python@v5
-      with:
-        python-version: "3.10"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
 
-    - name: Install system dependencies
-      run: |
-        sudo apt update
-        sudo apt install -y \
-          build-essential \
-          openjdk-17-jdk \
-          git \
-          zip unzip \
-          libgl1-mesa-dev
+      - name: Install system dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y \
+            build-essential \
+            openjdk-17-jdk \
+            git \
+            zip unzip \
+            libgl1-mesa-dev \
+            python3-pip \
+            python3-dev \
+            autoconf \
+            automake \
+            libtool \
+            pkg-config \
+            zlib1g-dev \
+            libc6-dev \
+            libffi-dev
 
-    - name: Install Buildozer
-      run: |
-        pip install --upgrade pip
-        pip install buildozer cython
+      - name: Install Buildozer & Cython
+        run: |
+          pip install --upgrade pip
+          pip install buildozer==1.4.3 cython==0.29.36
 
-    - name: Build APK
-      env:
-        BUILDOZER_WARN_ON_ROOT: 0
-      run: |
-        buildozer android debug
+      - name: Initialize Buildozer
+        run: |
+          buildozer android clean
+          buildozer android debug
 
-    - name: Upload APK
-      uses: actions/upload-artifact@v4
-      with:
-        name: GUA-debug-apk
-        path: bin/*.apk
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: GUA-debug-apk
+          path: bin/*.apk
