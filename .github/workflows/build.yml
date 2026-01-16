@@ -107,3 +107,54 @@ jobs:
             .buildozer/android/platform/build-arm64-v8a/dists/gua/**
             .buildozer/android/platform/build-arm64-v8a/dists/gua/gradle-diagnostic.log
           if-no-files-found: warn
+
+  emulator-test:
+    name: Run APK on Android emulator
+    runs-on: ubuntu-22.04
+    needs: build
+    timeout-minutes: 30
+    steps:
+      - name: Download APK artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: GUA-debug-apk
+          path: apk-artifact
+
+      - name: Show downloaded files
+        run: |
+          echo "Listing apk-artifact"
+          ls -la apk-artifact || true
+
+      - name: Run Android emulator, install APK and capture logs
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 31
+          arch: x86_64
+          target: google_apis
+          emulator-options: -no-window -no-audio -no-boot-anim
+          script: |
+            set -e
+            APK_PATH=$(ls apk-artifact/*.apk | head -n1)
+            echo "APK_PATH=$APK_PATH"
+            if [ -z "$APK_PATH" ]; then
+              echo "No APK found to install" >&2
+              exit 1
+            fi
+            adb install -r "$APK_PATH"
+            # Try launching the app; fallback to monkey if activity name differs
+            adb shell am start -n org.gua.gua/org.kivy.android.PythonActivity || adb shell monkey -p org.gua.gua -c android.intent.category.LAUNCHER 1 || true
+            sleep 10
+            adb logcat -d > logcat.txt || true
+            adb shell dumpsys activity activities > activity.txt || true
+            adb exec-out screencap -p > screenshot.png || true
+            ls -la
+
+      - name: Upload emulator runtime artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: emulator-runtime-artifacts
+          path: |
+            logcat.txt
+            activity.txt
+            screenshot.png
+          if-no-files-found: warn
