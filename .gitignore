@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+
+# Buildozer
+.buildozer/
+bin/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Environment variables
+.env
+
+# Config (keep config.py but ignore .env)
+# config.py
+
+# OS
+.DS_Store
+Thumbs.db
