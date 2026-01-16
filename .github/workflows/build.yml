@@ -41,10 +41,9 @@ jobs:
           pip install --upgrade pip
           pip install buildozer==1.5.0 cython==0.29.36
 
-      - name: Install Python requirements
-        if: exists('requirements.txt')
+      - name: Install Python requirements if present
         run: |
-          pip install -r requirements.txt
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
       - name: Initialize Buildozer & Build APK
         env:
