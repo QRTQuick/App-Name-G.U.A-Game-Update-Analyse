@@ -54,12 +54,34 @@ jobs:
 
     - name: Build with Buildozer
       run: |
-        yes | buildozer android debug
+        # Accept buildozer root warning
+        export BUILDOZER_WARN_ON_ROOT=0
+        # Build with verbose output
+        buildozer -v android debug
       env:
         ANDROID_HOME: /usr/local/lib/android/sdk
+      timeout-minutes: 60
+
+    - name: Show build logs on failure
+      if: failure()
+      run: |
+        echo "=== Checking for log files ==="
+        find .buildozer -name "*.log" -type f 2>/dev/null || echo "No log files found"
+        echo ""
+        echo "=== Last 100 lines of any found logs ==="
+        find .buildozer -name "*.log" -type f -exec sh -c 'echo "=== {} ===" && tail -100 "{}"' \; 2>/dev/null || echo "Could not read logs"
 
     - name: Upload APK
+      if: success()
       uses: actions/upload-artifact@v4
       with:
         name: gua-debug-apk
         path: bin/*.apk
+
+    - name: Upload build logs on failure
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: build-logs
+        path: .buildozer/**/*.log
+        if-no-files-found: ignore
