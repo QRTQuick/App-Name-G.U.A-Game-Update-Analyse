@@ -39,9 +39,16 @@ jobs:
       - name: Install Buildozer & Cython
         run: |
           pip install --upgrade pip
-          pip install buildozer==1.4.3 cython==0.29.36
+          pip install buildozer==1.5.0 cython==0.29.36
 
-      - name: Initialize Buildozer
+      - name: Install Python requirements
+        if: exists('requirements.txt')
+        run: |
+          pip install -r requirements.txt
+
+      - name: Initialize Buildozer & Build APK
+        env:
+          BUILDOZER_WARN_ON_ROOT: 0
         run: |
           buildozer android clean
           buildozer android debug
