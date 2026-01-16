@@ -15,7 +15,7 @@ jobs:
 
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.10"
+          python-version: "3.9"
 
       - name: Install system dependencies
         run: |
@@ -48,10 +48,10 @@ jobs:
         run: |
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
-      - name: Download python-for-android
+      - name: Download latest python-for-android
         run: |
           mkdir -p .buildozer/android/platform
-          git clone https://github.com/kivy/python-for-android.git .buildozer/android/platform/python-for-android
+          git clone -b master https://github.com/kivy/python-for-android.git .buildozer/android/platform/python-for-android
 
       - name: Build APK
         env:
