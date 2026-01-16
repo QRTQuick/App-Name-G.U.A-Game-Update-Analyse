@@ -75,6 +75,32 @@ jobs:
         python -m pip install buildozer==1.5.0 cython
         if [ -f requirements.txt ]; then python -m pip install -r requirements.txt; fi
 
+    - name: Prepare build environment (git, dirs, env)
+      run: |
+        echo "Setting up pre-build checks"
+        # Ensure git is present
+        sudo apt-get update && sudo apt-get install -y git || true
+        git --version || true
+
+        # Set Buildozer root warning off for CI
+        echo "BUILDOZER_WARN_ON_ROOT=0" >> $GITHUB_ENV
+
+        # Create expected directories used by Buildozer
+        mkdir -p "$HOME/.buildozer"
+        mkdir -p "$HOME/.buildozer/cache"
+        mkdir -p "$GITHUB_WORKSPACE/.buildozer"
+        mkdir -p "$GITHUB_WORKSPACE/bin"
+        mkdir -p "$GITHUB_WORKSPACE/.buildozer/applibs"
+        mkdir -p "$HOME/.buildozer/android/platform/android/platform" || true
+        mkdir -p "$GITHUB_WORKSPACE/.buildozer/android/platform"
+        mkdir -p "$GITHUB_WORKSPACE/.buildozer/android/app"
+
+        # Show quick verification
+        echo "=== Git & dirs verification ==="
+        which git || echo "git not in PATH"
+        ls -la "$HOME/.buildozer" || true
+        ls -la "$GITHUB_WORKSPACE/.buildozer" || true
+
     - name: Build with Buildozer
       env:
         ANDROID_SDK_ROOT: ${{ env.ANDROID_SDK_ROOT }}
