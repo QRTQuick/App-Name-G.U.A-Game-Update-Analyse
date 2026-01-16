@@ -44,6 +44,12 @@ jobs:
           pip install --upgrade pip
           pip install buildozer==1.5.0 cython==0.29.36
 
+      - name: Ensure Java 17 is used for the job
+        run: |
+          echo "JAVA_HOME=/usr/lib/jvm/temurin-17-jdk-amd64" >> $GITHUB_ENV
+          echo "/usr/lib/jvm/temurin-17-jdk-amd64/bin" >> $GITHUB_PATH
+          java -version
+
       - name: Install Python requirements if present
         run: |
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
@@ -57,7 +63,8 @@ jobs:
         env:
           BUILDOZER_WARN_ON_ROOT: 0
         run: |
-          buildozer android debug --requirements=python3==3.10.12,kivy==2.3.0,kivymd==1.2.0,requests==2.31.0,pillow==10.2.0,python-dotenv==1.0.0,pyjnius
+          echo "Using JAVA_HOME=$JAVA_HOME"
+          buildozer android debug --requirements=python3,kivy==2.3.0,kivymd==1.2.0,requests==2.31.0,pillow==10.2.0,python-dotenv==1.0.0,pyjnius
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
