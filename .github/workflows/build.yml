@@ -1,136 +1,45 @@
-name: Build Android APK
+name: Build G.U.A APK
 
 on:
   push:
-    branches: [ main, master ]
-  pull_request:
-    branches: [ main, master ]
+    branches: [ main ]
   workflow_dispatch:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
+    timeout-minutes: 120
 
     steps:
     - uses: actions/checkout@v4
+
+    - uses: actions/setup-python@v5
       with:
-        fetch-depth: 0
-        submodules: recursive
-        persist-credentials: true
+        python-version: "3.10"
 
-    - name: Configure Git for CI
+    - name: Install system dependencies
       run: |
-        git config --global user.email "ci@example.com"
-        git config --global user.name "GitHub Actions"
-        git config --global --add safe.directory "${{ github.workspace }}"
-        git config --global core.longpaths true
+        sudo apt update
+        sudo apt install -y \
+          build-essential \
+          openjdk-17-jdk \
+          git \
+          zip unzip \
+          libgl1-mesa-dev
 
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.10'
-
-    - name: Install system packages
+    - name: Install Buildozer
       run: |
-        sudo apt-get update
-        sudo apt-get install -y --no-install-recommends \
-          git zip unzip wget curl openjdk-17-jdk build-essential autoconf libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev cmake libffi-dev libssl-dev python3-venv
+        pip install --upgrade pip
+        pip install buildozer cython
 
-    - name: Download Android command line tools
-      run: |
-        SDK_DIR="$RUNNER_TEMP/android-sdk"
-        mkdir -p "$SDK_DIR"
-        cd "$SDK_DIR"
-        curl -fsSL https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -o cmdline-tools.zip
-        unzip -q cmdline-tools.zip -d cmdline-tools-temp
-        mkdir -p cmdline-tools/latest
-        mv cmdline-tools-temp/cmdline-tools/* cmdline-tools/latest/
-        rm -f cmdline-tools.zip
-        echo "ANDROID_SDK_ROOT=$SDK_DIR" >> $GITHUB_ENV
-        echo "ANDROID_HOME=$SDK_DIR" >> $GITHUB_ENV
-        echo "$SDK_DIR/cmdline-tools/latest/bin" >> $GITHUB_PATH
-        echo "$SDK_DIR/platform-tools" >> $GITHUB_PATH
-
-    - name: Install Android SDK components (platform-tools, build-tools, platforms, ndk)
-      run: |
-        export PATH="$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools:$PATH"
-        yes | sdkmanager --sdk_root="$ANDROID_SDK_ROOT" --licenses || true
-        sdkmanager --sdk_root="$ANDROID_SDK_ROOT" "platform-tools" "platforms;android-33" "build-tools;33.0.2" "ndk;25.2.9519653" "cmake;3.22.1" || true
-
-    # PATH entries were added to $GITHUB_PATH in the download step
-
-    - name: Cache pip and Buildozer files
-      uses: actions/cache@v4
-      with:
-        path: |
-          ~/.cache/pip
-          .buildozer
-          ~/.buildozer
-        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
-
-    - name: Install Python build tools and dependencies
-      run: |
-        python -m pip install --upgrade pip==23.3.1
-        python -m pip install --upgrade setuptools wheel
-        python -m pip install buildozer==1.5.0 cython
-        if [ -f requirements.txt ]; then python -m pip install -r requirements.txt; fi
-
-    - name: Prepare build environment (git, dirs, env)
-      run: |
-        echo "Setting up pre-build checks"
-        # Ensure git is present
-        sudo apt-get update && sudo apt-get install -y git || true
-        git --version || true
-
-        # Set Buildozer root warning off for CI
-        echo "BUILDOZER_WARN_ON_ROOT=0" >> $GITHUB_ENV
-
-        # Create expected directories used by Buildozer
-        mkdir -p "$HOME/.buildozer"
-        mkdir -p "$HOME/.buildozer/cache"
-        mkdir -p "$GITHUB_WORKSPACE/.buildozer"
-        mkdir -p "$GITHUB_WORKSPACE/bin"
-        mkdir -p "$GITHUB_WORKSPACE/.buildozer/applibs"
-        mkdir -p "$HOME/.buildozer/android/platform/android/platform" || true
-        mkdir -p "$GITHUB_WORKSPACE/.buildozer/android/platform"
-        mkdir -p "$GITHUB_WORKSPACE/.buildozer/android/app"
-
-        # Show quick verification
-        echo "=== Git & dirs verification ==="
-        which git || echo "git not in PATH"
-        ls -la "$HOME/.buildozer" || true
-        ls -la "$GITHUB_WORKSPACE/.buildozer" || true
-
-    - name: Build with Buildozer
+    - name: Build APK
       env:
-        ANDROID_SDK_ROOT: ${{ env.ANDROID_SDK_ROOT }}
-        ANDROID_HOME: ${{ env.ANDROID_HOME }}
-        PATH: ${{ env.PATH }}:$RUNNER_TEMP/android-sdk/cmdline-tools/latest/bin
+        BUILDOZER_WARN_ON_ROOT: 0
       run: |
-        export BUILDOZER_WARN_ON_ROOT=0
-        buildozer -v android debug
-      timeout-minutes: 120
-
-    - name: Show build logs on failure
-      if: failure()
-      run: |
-        echo "=== Checking for log files ==="
-        find .buildozer -name "*.log" -type f 2>/dev/null || echo "No log files found"
-        echo ""
-        echo "=== Last 200 lines of any found logs ==="
-        find .buildozer -name "*.log" -type f -exec sh -c 'echo "=== {} ===" && tail -200 "{}"' \; 2>/dev/null || echo "Could not read logs"
+        buildozer android debug
 
     - name: Upload APK
-      if: success()
       uses: actions/upload-artifact@v4
       with:
-        name: gua-debug-apk
+        name: GUA-debug-apk
         path: bin/*.apk
-
-    - name: Upload build logs on failure
-      if: failure()
-      uses: actions/upload-artifact@v4
-      with:
-        name: build-logs
-        path: .buildozer/**/*.log
-        if-no-files-found: ignore
