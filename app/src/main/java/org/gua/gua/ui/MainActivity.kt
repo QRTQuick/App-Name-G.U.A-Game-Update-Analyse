@@ -1,59 +1,44 @@
 package org.gua.gua.ui
 
 import android.os.Bundle
-import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
-import com.google.android.material.bottomnavigation.BottomNavigationView
 import dagger.hilt.android.AndroidEntryPoint
 import org.gua.gua.R
 import org.gua.gua.databinding.ActivityMainBinding
-import org.gua.gua.ui.viewmodel.MainViewModel
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
     
     private lateinit var binding: ActivityMainBinding
-    private val viewModel: MainViewModel by viewModels()
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        binding = ActivityMainBinding.inflate(layoutInflater)
-        setContentView(binding.root)
         
-        setupNavigation()
-        observeViewModel()
+        try {
+            binding = ActivityMainBinding.inflate(layoutInflater)
+            setContentView(binding.root)
+            
+            setupNavigation()
+        } catch (e: Exception) {
+            e.printStackTrace()
+            // Fallback to basic layout if binding fails
+            setContentView(R.layout.activity_main)
+        }
     }
     
     private fun setupNavigation() {
-        val navHostFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
-        val navController = navHostFragment.navController
-        
-        binding.bottomNavigation.setupWithNavController(navController)
-        
-        // Handle navigation based on user state
-        viewModel.checkUserState()
-    }
-    
-    private fun observeViewModel() {
-        viewModel.navigationEvent.observe(this) { destination ->
-            val navHostFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
-            val navController = navHostFragment.navController
-            
-            when (destination) {
-                "disclaimer" -> navController.navigate(R.id.disclaimerFragment)
-                "login" -> navController.navigate(R.id.loginFragment)
-                "home" -> navController.navigate(R.id.homeFragment)
+        try {
+            val navHostFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as? NavHostFragment
+            navHostFragment?.let { fragment ->
+                val navController = fragment.navController
+                binding.bottomNavigation.setupWithNavController(navController)
             }
-        }
-        
-        viewModel.showBottomNav.observe(this) { show ->
-            binding.bottomNavigation.visibility = if (show) {
-                BottomNavigationView.VISIBLE
-            } else {
-                BottomNavigationView.GONE
-            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            // Hide bottom navigation if setup fails
+            binding.bottomNavigation.visibility = android.view.View.GONE
         }
     }
 }

@@ -6,9 +6,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
-import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
 import org.gua.gua.databinding.FragmentHomeBinding
 import org.gua.gua.ui.adapter.GameAdapter
@@ -35,18 +33,23 @@ class HomeFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         
-        setupRecyclerView()
-        observeViewModel()
-        
-        // Load games
-        viewModel.loadLatestGames()
+        try {
+            setupRecyclerView()
+            observeViewModel()
+            
+            // Load games
+            viewModel.loadLatestGames()
+        } catch (e: Exception) {
+            e.printStackTrace()
+            // Show error state
+            binding.emptyView.visibility = View.VISIBLE
+            binding.gamesRecyclerView.visibility = View.GONE
+        }
     }
     
     private fun setupRecyclerView() {
         gameAdapter = GameAdapter { game ->
-            // Navigate to game details - simplified navigation
-            // TODO: Implement proper navigation to game details
-            // For now, just show a toast or log
+            // Simple click handling - just log for now
             android.util.Log.d("HomeFragment", "Game clicked: ${game.name}")
         }
         
@@ -57,37 +60,46 @@ class HomeFragment : Fragment() {
         
         // Swipe to refresh
         binding.swipeRefreshLayout.setOnRefreshListener {
-            viewModel.refreshGames()
+            try {
+                viewModel.refreshGames()
+            } catch (e: Exception) {
+                e.printStackTrace()
+                binding.swipeRefreshLayout.isRefreshing = false
+            }
         }
     }
     
     private fun observeViewModel() {
-        viewModel.games.observe(viewLifecycleOwner) { games ->
-            gameAdapter.submitList(games)
-        }
-        
-        viewModel.isLoading.observe(viewLifecycleOwner) { isLoading ->
-            binding.swipeRefreshLayout.isRefreshing = isLoading
-            binding.progressBar.visibility = if (isLoading && gameAdapter.itemCount == 0) {
-                android.view.View.VISIBLE
-            } else {
-                android.view.View.GONE
+        try {
+            viewModel.games.observe(viewLifecycleOwner) { games ->
+                if (games != null) {
+                    gameAdapter.submitList(games)
+                }
             }
-        }
-        
-        viewModel.error.observe(viewLifecycleOwner) { error ->
-            if (error != null) {
-                Snackbar.make(binding.root, error, Snackbar.LENGTH_LONG)
-                    .setAction("Retry") {
-                        viewModel.loadLatestGames()
-                    }
-                    .show()
+            
+            viewModel.isLoading.observe(viewLifecycleOwner) { isLoading ->
+                binding.swipeRefreshLayout.isRefreshing = isLoading ?: false
+                binding.progressBar.visibility = if (isLoading == true && gameAdapter.itemCount == 0) {
+                    View.VISIBLE
+                } else {
+                    View.GONE
+                }
             }
-        }
-        
-        viewModel.isEmpty.observe(viewLifecycleOwner) { isEmpty ->
-            binding.emptyView.visibility = if (isEmpty) android.view.View.VISIBLE else android.view.View.GONE
-            binding.gamesRecyclerView.visibility = if (isEmpty) android.view.View.GONE else android.view.View.VISIBLE
+            
+            viewModel.error.observe(viewLifecycleOwner) { error ->
+                if (error != null) {
+                    // Simple error handling - just log for now
+                    android.util.Log.e("HomeFragment", "Error: $error")
+                    binding.emptyView.visibility = View.VISIBLE
+                }
+            }
+            
+            viewModel.isEmpty.observe(viewLifecycleOwner) { isEmpty ->
+                binding.emptyView.visibility = if (isEmpty == true) View.VISIBLE else View.GONE
+                binding.gamesRecyclerView.visibility = if (isEmpty == true) View.GONE else View.VISIBLE
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
     }
     
