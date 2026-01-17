@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <group
+        android:scaleX="0.8"
+        android:scaleY="0.8"
+        android:translateX="10.8"
+        android:translateY="10.8">
+        <!-- Gamepad icon -->
+        <path
+            android:fillColor="@color/white"
+            android:pathData="M84,24H24C14.4,24 6,32.4 6,42v24c0,9.6 8.4,18 18,18h12v-6H24V42h60v36h-12v6h12c9.6,0 18,-8.4 18,-18V42C102,32.4 93.6,24 84,24z"/>
+        <!-- D-pad -->
+        <path
+            android:fillColor="@color/white"
+            android:pathData="M36,40H28v8h-8v8h8v8h8v-8h8v-8h-8V40z"/>
+        <!-- Action buttons -->
+        <path
+            android:fillColor="@color/white"
+            android:pathData="M76,40c-2.2,0 -4,1.8 -4,4s1.8,4 4,4s4,-1.8 4,-4S78.2,40 76,40z"/>
+        <path
+            android:fillColor="@color/white"
+            android:pathData="M68,48c-2.2,0 -4,1.8 -4,4s1.8,4 4,4s4,-1.8 4,-4S70.2,48 68,48z"/>
+        <!-- G.U.A text -->
+        <path
+            android:fillColor="@color/white"
+            android:pathData="M30,72h6v2h-6v-2zM38,72h2v6h-2v-6zM42,72h6v2h-6v-2zM42,76h6v2h-6v-2z"/>
+    </group>
+</vector>
