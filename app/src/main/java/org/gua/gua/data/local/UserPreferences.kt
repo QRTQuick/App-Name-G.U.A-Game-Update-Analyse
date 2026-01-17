@@ -23,6 +23,11 @@ class UserPreferences @Inject constructor(
         private const val KEY_VIEWED_COUNT = "viewed_count"
         private const val KEY_FAVORITES_COUNT = "favorites_count"
         private const val KEY_REVIEWS_COUNT = "reviews_count"
+        private const val KEY_THEME = "theme"
+        private const val KEY_AUTO_SYNC = "auto_sync"
+        private const val KEY_NOTIFICATIONS_ENABLED = "notifications_enabled"
+        private const val KEY_CACHE_SIZE_LIMIT = "cache_size_limit"
+        private const val KEY_LANGUAGE = "language"
     }
     
     fun saveUser(user: User) {
@@ -43,6 +48,8 @@ class UserPreferences @Inject constructor(
             User(username, email, disclaimerAccepted)
         } else null
     }
+    
+    fun getCurrentUser(): User? = getUser()
     
     fun isLoggedIn(): Boolean {
         return prefs.getBoolean(KEY_IS_LOGGED_IN, false)
@@ -85,5 +92,50 @@ class UserPreferences @Inject constructor(
     fun incrementViewed() {
         val current = prefs.getInt(KEY_VIEWED_COUNT, 0)
         prefs.edit().putInt(KEY_VIEWED_COUNT, current + 1).apply()
+    }
+    
+    // Theme settings
+    fun getTheme(): String {
+        return prefs.getString(KEY_THEME, "Dark") ?: "Dark"
+    }
+    
+    fun setTheme(theme: String) {
+        prefs.edit().putString(KEY_THEME, theme).apply()
+    }
+    
+    // Auto sync settings
+    fun isAutoSyncEnabled(): Boolean {
+        return prefs.getBoolean(KEY_AUTO_SYNC, true)
+    }
+    
+    fun setAutoSyncEnabled(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_AUTO_SYNC, enabled).apply()
+    }
+    
+    // Notification settings
+    fun areNotificationsEnabled(): Boolean {
+        return prefs.getBoolean(KEY_NOTIFICATIONS_ENABLED, true)
+    }
+    
+    fun setNotificationsEnabled(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_NOTIFICATIONS_ENABLED, enabled).apply()
+    }
+    
+    // Cache settings
+    fun getCacheSizeLimit(): Long {
+        return prefs.getLong(KEY_CACHE_SIZE_LIMIT, 100 * 1024 * 1024) // 100MB default
+    }
+    
+    fun setCacheSizeLimit(sizeInBytes: Long) {
+        prefs.edit().putLong(KEY_CACHE_SIZE_LIMIT, sizeInBytes).apply()
+    }
+    
+    // Language settings
+    fun getLanguage(): String {
+        return prefs.getString(KEY_LANGUAGE, "en") ?: "en"
+    }
+    
+    fun setLanguage(language: String) {
+        prefs.edit().putString(KEY_LANGUAGE, language).apply()
     }
 }

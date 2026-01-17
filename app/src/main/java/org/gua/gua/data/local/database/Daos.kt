@@ -8,6 +8,9 @@ interface FavoriteDao {
     @Query("SELECT * FROM favorite_games ORDER BY addedAt DESC")
     fun getAllFavorites(): Flow<List<FavoriteGame>>
     
+    @Query("SELECT * FROM favorite_games ORDER BY addedAt DESC")
+    suspend fun getAllFavoritesList(): List<FavoriteGame>
+    
     @Query("SELECT * FROM favorite_games WHERE id = :gameId")
     suspend fun getFavorite(gameId: Int): FavoriteGame?
     
@@ -22,12 +25,21 @@ interface FavoriteDao {
     
     @Query("SELECT COUNT(*) FROM favorite_games")
     suspend fun getFavoritesCount(): Int
+    
+    @Query("DELETE FROM favorite_games")
+    suspend fun clearAllFavorites()
 }
 
 @Dao
 interface HistoryDao {
     @Query("SELECT * FROM history_games ORDER BY viewedAt DESC LIMIT 50")
     fun getHistory(): Flow<List<HistoryGame>>
+    
+    @Query("SELECT * FROM history_games ORDER BY viewedAt DESC LIMIT 50")
+    suspend fun getHistoryList(): List<HistoryGame>
+    
+    @Query("SELECT * FROM history_games ORDER BY viewedAt DESC LIMIT :limit")
+    suspend fun getRecentHistory(limit: Int): List<HistoryGame>
     
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun addToHistory(game: HistoryGame)
@@ -64,4 +76,7 @@ interface CacheDao {
     
     @Query("SELECT COUNT(*) FROM cached_games WHERE expiresAt <= :currentTime")
     suspend fun getExpiredCacheCount(currentTime: Long = System.currentTimeMillis()): Int
+    
+    @Query("SELECT SUM(LENGTH(data)) FROM cached_games")
+    suspend fun getCacheSize(): Long
 }
