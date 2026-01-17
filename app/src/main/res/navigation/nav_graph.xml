@@ -1,9 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <navigation xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:app="http://schemas.android.com/apk/res/auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/nav_graph"
     app:startDestination="@id/homeFragment">
+
+    <fragment
+        android:id="@+id/disclaimerFragment"
+        android:name="org.gua.gua.ui.fragment.DisclaimerFragment"
+        android:label="Disclaimer"
+        tools:layout="@layout/fragment_disclaimer" />
 
     <fragment
         android:id="@+id/loginFragment"
@@ -16,5 +22,51 @@
         android:name="org.gua.gua.ui.fragment.HomeFragment"
         android:label="Home"
         tools:layout="@layout/fragment_home" />
+
+    <fragment
+        android:id="@+id/searchFragment"
+        android:name="org.gua.gua.ui.fragment.SearchFragment"
+        android:label="Search"
+        tools:layout="@layout/fragment_search" />
+
+    <fragment
+        android:id="@+id/trendingFragment"
+        android:name="org.gua.gua.ui.fragment.TrendingFragment"
+        android:label="Trending"
+        tools:layout="@layout/fragment_trending" />
+
+    <fragment
+        android:id="@+id/profileFragment"
+        android:name="org.gua.gua.ui.fragment.ProfileFragment"
+        android:label="Profile"
+        tools:layout="@layout/fragment_profile" />
+
+    <fragment
+        android:id="@+id/settingsFragment"
+        android:name="org.gua.gua.ui.fragment.SettingsFragment"
+        android:label="Settings"
+        tools:layout="@layout/fragment_settings" />
+
+    <fragment
+        android:id="@+id/gameDetailsFragment"
+        android:name="org.gua.gua.ui.fragment.GameDetailsFragment"
+        android:label="Game Details"
+        tools:layout="@layout/fragment_game_details">
+        <argument
+            android:name="gameId"
+            app:argType="integer" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/favoritesFragment"
+        android:name="org.gua.gua.ui.fragment.FavoritesFragment"
+        android:label="Favorites"
+        tools:layout="@layout/fragment_favorites" />
+
+    <fragment
+        android:id="@+id/historyFragment"
+        android:name="org.gua.gua.ui.fragment.HistoryFragment"
+        android:label="History"
+        tools:layout="@layout/fragment_history" />
 
 </navigation>
