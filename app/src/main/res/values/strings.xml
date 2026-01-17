@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">G.U.A</string>
+    
+    <!-- Navigation -->
+    <string name="home">Home</string>
+    <string name="search">Search</string>
+    <string name="trending">Trending</string>
+    <string name="profile">Profile</string>
+    <string name="settings">Settings</string>
+    
+    <!-- Screens -->
+    <string name="disclaimer">Disclaimer</string>
+    <string name="login">Login</string>
+    <string name="game_details">Game Details</string>
+    <string name="favorites">Favorites</string>
+    <string name="history">History</string>
+    
+    <!-- Common -->
+    <string name="loading">Loading…</string>
+    <string name="error">Error</string>
+    <string name="retry">Retry</string>
+    <string name="ok">OK</string>
+    <string name="cancel">Cancel</string>
+    
+    <!-- Login -->
+    <string name="welcome_back">Welcome Back!</string>
+    <string name="login_subtitle">Login to access your profile</string>
+    <string name="username">Username</string>
+    <string name="email_address">Email Address</string>
+    <string name="enter_username">Enter your username</string>
+    <string name="enter_email">Enter your email</string>
+    <string name="login_button">Login</string>
+    <string name="continue_as_guest">Continue as Guest</string>
+    
+    <!-- Game Details -->
+    <string name="add_to_favorites">Add to Favorites</string>
+    <string name="remove_from_favorites">Remove from Favorites</string>
+    <string name="rating">Rating</string>
+    <string name="released">Released</string>
+    <string name="platforms">Platforms</string>
+    <string name="genres">Genres</string>
+    <string name="developers">Developers</string>
+    <string name="publishers">Publishers</string>
+    
+    <!-- Profile -->
+    <string name="your_stats">Your Stats</string>
+    <string name="viewed">Viewed</string>
+    <string name="reviews">Reviews</string>
+    <string name="edit_profile">Edit Profile</string>
+    <string name="recently_viewed">Recently Viewed</string>
+    <string name="notifications">Notifications</string>
+    <string name="logout">Logout</string>
+    
+    <!-- Settings -->
+    <string name="theme">Theme</string>
+    <string name="language">Language</string>
+    <string name="cache_management">Cache Management</string>
+    <string name="clear_cache">Clear Cache</string>
+    <string name="clear_expired_cache">Clear Expired Cache</string>
+    <string name="clear_history">Clear History</string>
+    <string name="about">About</string>
+    <string name="privacy_policy">Privacy Policy</string>
+    <string name="terms_of_service">Terms of Service</string>
+    
+    <!-- Disclaimer -->
+    <string name="disclaimer_title">RAWG API Disclaimer</string>
+    <string name="disclaimer_text">This app uses the RAWG Video Games Database API to provide game information. By using this app, you agree to RAWG\'s terms of service and acknowledge that all game data is provided by RAWG.</string>
+    <string name="accept_and_continue">Accept and Continue</string>
+</resources>

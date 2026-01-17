@@ -1,160 +1,113 @@
-name: Build G.U.A APK
+name: Build Android APK
 
 on:
   push:
+    branches: [ main ]
+  pull_request:
     branches: [ main ]
   workflow_dispatch:
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
-    timeout-minutes: 180
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.10"
-
-      - name: Install system dependencies
-        run: |
-          sudo apt update
-          sudo apt install -y \
-            build-essential \
-            openjdk-17-jdk \
-            git \
-            zip unzip \
-            libgl1-mesa-dev \
-            python3-pip \
-            python3-dev \
-            autoconf \
-            automake \
-            libtool \
-            pkg-config \
-            zlib1g-dev \
-            libc6-dev \
-            libffi-dev \
-            ccache \
-            wget \
-            curl
-
-      - name: Install Buildozer & Cython
-        run: |
-          pip install --upgrade pip
-          pip install buildozer==1.5.0 cython==0.29.36
-
-      - name: Ensure Java 17 is used for the job
-        run: |
-          echo "JAVA_HOME=/usr/lib/jvm/temurin-17-jdk-amd64" >> $GITHUB_ENV
-          echo "/usr/lib/jvm/temurin-17-jdk-amd64/bin" >> $GITHUB_PATH
-          java -version
-
-      - name: Install Python requirements if present
-        run: |
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-
-      - name: Download latest python-for-android
-        run: |
-          mkdir -p .buildozer/android/platform
-          git clone -b master https://github.com/kivy/python-for-android.git .buildozer/android/platform/python-for-android
-
-      - name: Build APK
-        env:
-          BUILDOZER_WARN_ON_ROOT: 0
-        run: |
-          echo "Using JAVA_HOME=$JAVA_HOME"
-          buildozer android debug --requirements=python3,kivy==2.3.0,kivymd==1.2.0,requests==2.31.0,pillow==10.2.0,python-dotenv==1.0.0,pyjnius
-
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: GUA-debug-apk
-          path: bin/*.apk
-      - name: Show build logs on failure
-        if: failure()
-        run: |
-          echo "=== Checking for log files ==="
-          find .buildozer -name "*.log" -type f 2>/dev/null || echo "No log files found"
-          echo ""
-          echo "=== Last 200 lines of any found logs ==="
-          find .buildozer -name "*.log" -type f -exec sh -c 'echo "=== {} ===" && tail -200 "{}"' \; 2>/dev/null || echo "Could not read logs"
-
-      - name: Run Gradle wrapper with stacktrace (diagnostic)
-        if: failure()
-        run: |
-          set -x
-          DIST_DIR=".buildozer/android/platform/build-arm64-v8a/dists/gua"
-          # Force Java 17 for gradle (Gradle 9 requires Java 17+)
-          export JAVA_HOME="/usr/lib/jvm/temurin-17-jdk-amd64"
-          export PATH="$JAVA_HOME/bin:$PATH"
-          java -version || true
-          if [ -x "$DIST_DIR/gradlew" ] || [ -f "$DIST_DIR/gradlew" ]; then
-            chmod +x "$DIST_DIR/gradlew" || true
-            echo "Running gradlew --stacktrace in $DIST_DIR"
-            (cd "$DIST_DIR" && ./gradlew clean assembleDebug --stacktrace --no-daemon 2>&1 | tee gradle-diagnostic.log) || true
-          else
-            echo "gradlew not found in $DIST_DIR"
-            ls -la "$DIST_DIR" || true
-          fi
-
-      - name: Upload gradle diagnostics and distribution (failure)
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: gradle-diagnostics-and-dists
-          path: |
-            .buildozer/android/platform/build-arm64-v8a/dists/gua/**
-            .buildozer/android/platform/build-arm64-v8a/dists/gua/gradle-diagnostic.log
-          if-no-files-found: warn
-
-  emulator-test:
-    name: Run APK on Android emulator
-    runs-on: ubuntu-22.04
-    needs: build
+    runs-on: ubuntu-latest
     timeout-minutes: 30
+
     steps:
-      - name: Download APK artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: GUA-debug-apk
-          path: apk-artifact
+    - name: Checkout code
+      uses: actions/checkout@v4
 
-      - name: Show downloaded files
-        run: |
-          echo "Listing apk-artifact"
-          ls -la apk-artifact || true
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
 
-      - name: Run Android emulator, install APK and capture logs
-        uses: reactivecircus/android-emulator-runner@v2
-        with:
-          api-level: 31
-          arch: x86_64
-          target: google_apis
-          emulator-options: -no-window -no-audio -no-boot-anim
-          script: |
-            set -e
-            APK_PATH=$(ls apk-artifact/*.apk | head -n1)
-            echo "APK_PATH=$APK_PATH"
-            if [ -z "$APK_PATH" ]; then
-              echo "No APK found to install" >&2
-              exit 1
-            fi
-            adb install -r "$APK_PATH"
-            # Try launching the app; fallback to monkey if activity name differs
-            adb shell am start -n org.gua.gua/org.kivy.android.PythonActivity || adb shell monkey -p org.gua.gua -c android.intent.category.LAUNCHER 1 || true
-            sleep 10
-            adb logcat -d > logcat.txt || true
-            adb shell dumpsys activity activities > activity.txt || true
-            adb exec-out screencap -p > screenshot.png || true
-            ls -la
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v3
 
-      - name: Upload emulator runtime artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: emulator-runtime-artifacts
-          path: |
-            logcat.txt
-            activity.txt
-            screenshot.png
-          if-no-files-found: warn
+    - name: Cache Gradle packages
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.gradle/caches
+          ~/.gradle/wrapper
+        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+        restore-keys: |
+          ${{ runner.os }}-gradle-
+
+    - name: Create gradle wrapper
+      run: |
+        gradle wrapper --gradle-version 8.2
+
+    - name: Grant execute permission for gradlew
+      run: chmod +x gradlew
+
+    - name: Create local.properties
+      run: |
+        echo "sdk.dir=$ANDROID_HOME" > local.properties
+
+    - name: Create .env file for build
+      run: |
+        echo "RAWG_API_KEY=${{ secrets.RAWG_API_KEY || 'YOUR_API_KEY_HERE' }}" > .env
+
+    - name: Build debug APK
+      run: ./gradlew assembleDebug
+
+    - name: Upload Debug APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: gua-debug-apk
+        path: app/build/outputs/apk/debug/*.apk
+
+    - name: Build release APK (if signed)
+      if: github.ref == 'refs/heads/main'
+      run: ./gradlew assembleRelease
+      continue-on-error: true
+
+    - name: Upload Release APK
+      if: github.ref == 'refs/heads/main'
+      uses: actions/upload-artifact@v4
+      with:
+        name: gua-release-apk
+        path: app/build/outputs/apk/release/*.apk
+      continue-on-error: true
+
+  test:
+    name: Run Unit Tests
+    runs-on: ubuntu-latest
+    needs: build
+    timeout-minutes: 15
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v3
+
+    - name: Create gradle wrapper
+      run: |
+        gradle wrapper --gradle-version 8.2
+
+    - name: Grant execute permission for gradlew
+      run: chmod +x gradlew
+
+    - name: Create local.properties
+      run: |
+        echo "sdk.dir=$ANDROID_HOME" > local.properties
+
+    - name: Run unit tests
+      run: ./gradlew test
+
+    - name: Upload test results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: test-results
+        path: app/build/reports/tests/
