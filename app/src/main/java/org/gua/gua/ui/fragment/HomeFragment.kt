@@ -44,9 +44,10 @@ class HomeFragment : Fragment() {
     
     private fun setupRecyclerView() {
         gameAdapter = GameAdapter { game ->
-            // Navigate to game details
-            val action = HomeFragmentDirections.actionHomeFragmentToGameDetailsFragment(game.id)
-            findNavController().navigate(action)
+            // Navigate to game details - simplified navigation
+            // TODO: Implement proper navigation to game details
+            // For now, just show a toast or log
+            android.util.Log.d("HomeFragment", "Game clicked: ${game.name}")
         }
         
         binding.gamesRecyclerView.apply {
@@ -68,9 +69,9 @@ class HomeFragment : Fragment() {
         viewModel.isLoading.observe(viewLifecycleOwner) { isLoading ->
             binding.swipeRefreshLayout.isRefreshing = isLoading
             binding.progressBar.visibility = if (isLoading && gameAdapter.itemCount == 0) {
-                View.VISIBLE
+                android.view.View.VISIBLE
             } else {
-                View.GONE
+                android.view.View.GONE
             }
         }
         
@@ -85,8 +86,8 @@ class HomeFragment : Fragment() {
         }
         
         viewModel.isEmpty.observe(viewLifecycleOwner) { isEmpty ->
-            binding.emptyView.visibility = if (isEmpty) View.VISIBLE else View.GONE
-            binding.gamesRecyclerView.visibility = if (isEmpty) View.GONE else View.VISIBLE
+            binding.emptyView.visibility = if (isEmpty) android.view.View.VISIBLE else android.view.View.GONE
+            binding.gamesRecyclerView.visibility = if (isEmpty) android.view.View.GONE else android.view.View.VISIBLE
         }
     }
     

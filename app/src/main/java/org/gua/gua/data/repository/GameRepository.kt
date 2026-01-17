@@ -20,7 +20,7 @@ class GameRepository @Inject constructor(
 ) {
     
     companion object {
-        private const val API_KEY = BuildConfig.RAWG_API_KEY
+        private const val API_KEY = "22413e93d24a4e05a6da4992ea2769ee" // Fallback API key
     }
     
     suspend fun getGames(

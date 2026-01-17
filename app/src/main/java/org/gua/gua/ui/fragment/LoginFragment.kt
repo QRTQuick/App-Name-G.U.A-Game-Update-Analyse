@@ -82,17 +82,17 @@ class LoginFragment : Fragment() {
         viewModel.loginError.observe(viewLifecycleOwner) { error ->
             if (error != null) {
                 binding.errorText.text = error
-                binding.errorText.visibility = View.VISIBLE
+                binding.errorText.visibility = android.view.View.VISIBLE
                 shakeView(binding.loginCard)
             } else {
-                binding.errorText.visibility = View.GONE
+                binding.errorText.visibility = android.view.View.GONE
             }
         }
         
         viewModel.isLoading.observe(viewLifecycleOwner) { isLoading ->
             binding.loginButton.isEnabled = !isLoading
             binding.guestButton.isEnabled = !isLoading
-            binding.progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
+            binding.progressBar.visibility = if (isLoading) android.view.View.VISIBLE else android.view.View.GONE
         }
         
         viewModel.loginSuccess.observe(viewLifecycleOwner) { success ->
