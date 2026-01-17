@@ -25,18 +25,10 @@ jobs:
     - name: Setup Android SDK
       uses: android-actions/setup-android@v3
 
-    - name: Cache Gradle packages
-      uses: actions/cache@v4
+    - name: Setup Gradle
+      uses: gradle/gradle-build-action@v2
       with:
-        path: |
-          ~/.gradle/caches
-          ~/.gradle/wrapper
-        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-        restore-keys: |
-          ${{ runner.os }}-gradle-
-
-    - name: Grant execute permission for gradlew
-      run: chmod +x gradlew
+        gradle-version: 8.5
 
     - name: Create local.properties
       run: |
@@ -47,7 +39,7 @@ jobs:
         echo "RAWG_API_KEY=${{ secrets.RAWG_API_KEY || '22413e93d24a4e05a6da4992ea2769ee' }}" > .env
 
     - name: Build debug APK
-      run: ./gradlew assembleDebug --stacktrace
+      run: gradle assembleDebug --stacktrace
 
     - name: Upload Debug APK
       uses: actions/upload-artifact@v4
@@ -57,7 +49,7 @@ jobs:
 
     - name: Build release APK (if signed)
       if: github.ref == 'refs/heads/main'
-      run: ./gradlew assembleRelease --stacktrace
+      run: gradle assembleRelease --stacktrace
       continue-on-error: true
 
     - name: Upload Release APK
@@ -87,8 +79,10 @@ jobs:
     - name: Setup Android SDK
       uses: android-actions/setup-android@v3
 
-    - name: Grant execute permission for gradlew
-      run: chmod +x gradlew
+    - name: Setup Gradle
+      uses: gradle/gradle-build-action@v2
+      with:
+        gradle-version: 8.5
 
     - name: Create local.properties
       run: |
@@ -99,7 +93,7 @@ jobs:
         echo "RAWG_API_KEY=${{ secrets.RAWG_API_KEY || '22413e93d24a4e05a6da4992ea2769ee' }}" > .env
 
     - name: Run unit tests
-      run: ./gradlew test --stacktrace
+      run: gradle test --stacktrace
 
     - name: Upload test results
       uses: actions/upload-artifact@v4
