@@ -5,19 +5,16 @@
     android:viewportWidth="200"
     android:viewportHeight="200">
     
-    <rect
-        android:width="200"
-        android:height="200"
-        android:fillColor="?attr/colorSurfaceVariant" />
+    <path
+        android:fillColor="?attr/colorSurfaceVariant"
+        android:pathData="M0,0h200v200h-200z" />
     
     <path
         android:fillColor="?attr/colorOnSurfaceVariant"
         android:pathData="M100,60L140,100L100,140L60,100Z" />
     
-    <circle
-        android:cx="100"
-        android:cy="100"
-        android:r="8"
-        android:fillColor="?attr/colorOnSurfaceVariant" />
+    <path
+        android:fillColor="?attr/colorOnSurfaceVariant"
+        android:pathData="M100,100m-8,0a8,8 0,1 1,16 0a8,8 0,1 1,-16 0" />
         
 </vector>
