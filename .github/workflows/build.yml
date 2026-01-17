@@ -10,7 +10,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
 
     steps:
     - name: Checkout code
@@ -24,32 +24,68 @@ jobs:
 
     - name: Setup Android SDK
       uses: android-actions/setup-android@v3
+      with:
+        api-level: 34
+        build-tools: 34.0.0
+        cmake: 3.22.1
+        ndk: 25.1.8937393
+
+    - name: Accept Android SDK licenses
+      run: yes | sdkmanager --licenses || true
+
+    - name: Install Android SDK components
+      run: |
+        sdkmanager "platforms;android-34"
+        sdkmanager "platforms;android-26"
+        sdkmanager "build-tools;34.0.0"
+        sdkmanager "extras;android;m2repository"
+        sdkmanager "extras;google;m2repository"
 
     - name: Setup Gradle
       uses: gradle/gradle-build-action@v2
       with:
         gradle-version: 8.5
+        cache-read-only: false
+
+    - name: Cache Gradle dependencies
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.gradle/caches
+          ~/.gradle/wrapper
+          ~/.android/build-cache
+        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+        restore-keys: |
+          ${{ runner.os }}-gradle-
 
     - name: Create local.properties
       run: |
         echo "sdk.dir=$ANDROID_HOME" > local.properties
+        echo "ndk.dir=$ANDROID_NDK_ROOT" >> local.properties
 
     - name: Create .env file for build
       run: |
         echo "RAWG_API_KEY=${{ secrets.RAWG_API_KEY || '22413e93d24a4e05a6da4992ea2769ee' }}" > .env
 
+    - name: Clean project
+      run: gradle clean --stacktrace
+
+    - name: Download dependencies
+      run: gradle dependencies --stacktrace
+
     - name: Build debug APK
-      run: gradle assembleDebug --stacktrace
+      run: gradle assembleDebug --stacktrace --info
 
     - name: Upload Debug APK
       uses: actions/upload-artifact@v4
       with:
         name: gua-debug-apk
         path: app/build/outputs/apk/debug/*.apk
+        retention-days: 30
 
     - name: Build release APK (if signed)
       if: github.ref == 'refs/heads/main'
-      run: gradle assembleRelease --stacktrace
+      run: gradle assembleRelease --stacktrace --info
       continue-on-error: true
 
     - name: Upload Release APK
@@ -58,13 +94,14 @@ jobs:
       with:
         name: gua-release-apk
         path: app/build/outputs/apk/release/*.apk
+        retention-days: 30
       continue-on-error: true
 
   test:
     name: Run Unit Tests
     runs-on: ubuntu-latest
     needs: build
-    timeout-minutes: 15
+    timeout-minutes: 20
 
     steps:
     - name: Checkout code
@@ -78,11 +115,15 @@ jobs:
 
     - name: Setup Android SDK
       uses: android-actions/setup-android@v3
+      with:
+        api-level: 34
+        build-tools: 34.0.0
 
     - name: Setup Gradle
       uses: gradle/gradle-build-action@v2
       with:
         gradle-version: 8.5
+        cache-read-only: true
 
     - name: Create local.properties
       run: |
@@ -93,7 +134,7 @@ jobs:
         echo "RAWG_API_KEY=${{ secrets.RAWG_API_KEY || '22413e93d24a4e05a6da4992ea2769ee' }}" > .env
 
     - name: Run unit tests
-      run: gradle test --stacktrace
+      run: gradle test --stacktrace --info
 
     - name: Upload test results
       uses: actions/upload-artifact@v4
@@ -101,3 +142,4 @@ jobs:
       with:
         name: test-results
         path: app/build/reports/tests/
+        retention-days: 7
