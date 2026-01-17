@@ -26,14 +26,27 @@ android {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        debug {
+            storeFile file("debug.keystore")
+            storePassword "android"
+            keyAlias "androiddebugkey"
+            keyPassword "android"
+        }
+    }
+
     buildTypes {
         debug {
             buildConfigField "String", "RAWG_API_KEY", "\"${envProps.getProperty('RAWG_API_KEY', 'YOUR_API_KEY_HERE')}\""
+            debuggable true
+            minifyEnabled false
+            signingConfig signingConfigs.debug
         }
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             buildConfigField "String", "RAWG_API_KEY", "\"${envProps.getProperty('RAWG_API_KEY', 'YOUR_API_KEY_HERE')}\""
+            signingConfig signingConfigs.debug
         }
     }
     
@@ -50,6 +63,12 @@ android {
         viewBinding true
         dataBinding true
         buildConfig true
+    }
+    
+    packagingOptions {
+        resources {
+            excludes += '/META-INF/{AL2.0,LGPL2.1}'
+        }
     }
 }
 
