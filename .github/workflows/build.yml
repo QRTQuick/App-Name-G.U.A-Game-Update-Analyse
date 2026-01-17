@@ -74,14 +74,17 @@ jobs:
       run: |
         echo "RAWG_API_KEY=${{ secrets.RAWG_API_KEY || '22413e93d24a4e05a6da4992ea2769ee' }}" > .env
 
+    - name: Make gradlew executable
+      run: chmod +x ./gradlew
+
     - name: Clean project
-      run: gradle clean --stacktrace
+      run: ./gradlew clean --stacktrace
 
     - name: Download dependencies
-      run: gradle dependencies --stacktrace
+      run: ./gradlew dependencies --stacktrace
 
     - name: Build debug APK
-      run: gradle assembleDebug --stacktrace --info
+      run: ./gradlew assembleDebug --stacktrace --info
 
     - name: Upload Debug APK
       uses: actions/upload-artifact@v4
@@ -92,7 +95,7 @@ jobs:
 
     - name: Build release APK (if signed)
       if: github.ref == 'refs/heads/main'
-      run: gradle assembleRelease --stacktrace --info
+      run: ./gradlew assembleRelease --stacktrace --info
       continue-on-error: true
 
     - name: Upload Release APK
@@ -142,7 +145,7 @@ jobs:
         echo "RAWG_API_KEY=${{ secrets.RAWG_API_KEY || '22413e93d24a4e05a6da4992ea2769ee' }}" > .env
 
     - name: Run unit tests
-      run: gradle test --stacktrace --info
+      run: ./gradlew test --stacktrace --info
 
     - name: Upload test results
       uses: actions/upload-artifact@v4
