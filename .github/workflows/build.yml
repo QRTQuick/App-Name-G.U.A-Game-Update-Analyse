@@ -25,10 +25,18 @@ jobs:
     - name: Setup Android SDK
       uses: android-actions/setup-android@v3
 
-    - name: Setup Gradle
-      uses: gradle/gradle-build-action@v2
+    - name: Cache Gradle packages
+      uses: actions/cache@v3
       with:
-        gradle-version: 8.5
+        path: |
+          ~/.gradle/caches
+          ~/.gradle/wrapper
+        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+        restore-keys: |
+          ${{ runner.os }}-gradle-
+
+    - name: Make gradlew executable
+      run: chmod +x ./gradlew
 
     - name: Create local.properties
       run: |
@@ -39,7 +47,7 @@ jobs:
         echo "RAWG_API_KEY=${{ secrets.RAWG_API_KEY || '22413e93d24a4e05a6da4992ea2769ee' }}" > .env
 
     - name: Build debug APK
-      run: gradle assembleDebug --stacktrace
+      run: ./gradlew assembleDebug --stacktrace --no-daemon
 
     - name: Upload Debug APK
       uses: actions/upload-artifact@v4
@@ -49,7 +57,7 @@ jobs:
 
     - name: Build release APK (if signed)
       if: github.ref == 'refs/heads/main'
-      run: gradle assembleRelease --stacktrace
+      run: ./gradlew assembleRelease --stacktrace --no-daemon
       continue-on-error: true
 
     - name: Upload Release APK
@@ -79,10 +87,18 @@ jobs:
     - name: Setup Android SDK
       uses: android-actions/setup-android@v3
 
-    - name: Setup Gradle
-      uses: gradle/gradle-build-action@v2
+    - name: Cache Gradle packages
+      uses: actions/cache@v3
       with:
-        gradle-version: 8.5
+        path: |
+          ~/.gradle/caches
+          ~/.gradle/wrapper
+        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+        restore-keys: |
+          ${{ runner.os }}-gradle-
+
+    - name: Make gradlew executable
+      run: chmod +x ./gradlew
 
     - name: Create local.properties
       run: |
@@ -93,7 +109,7 @@ jobs:
         echo "RAWG_API_KEY=${{ secrets.RAWG_API_KEY || '22413e93d24a4e05a6da4992ea2769ee' }}" > .env
 
     - name: Run unit tests
-      run: gradle test --stacktrace
+      run: ./gradlew test --stacktrace --no-daemon
 
     - name: Upload test results
       uses: actions/upload-artifact@v4
